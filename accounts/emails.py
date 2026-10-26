@@ -1,3 +1,41 @@
+import json
+import urllib.request
+import urllib.error
+
+def send_via_resend_api(to_email, subject, html_content, text_content):
+    api_key = getattr(settings, 'RESEND_API_KEY', os.getenv('RESEND_API_KEY', '')).strip()
+    if not api_key:
+        return False
+
+    sender = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Expense Tracker <onboarding@resend.dev>')
+    if 'noreply@expensetracker.np' in sender or 'localhost' in sender:
+        sender = 'Expense Tracker <onboarding@resend.dev>'
+
+    payload = {
+        'from': sender,
+        'to': [to_email],
+        'subject': subject,
+        'html': html_content,
+        'text': text_content,
+    }
+    req = urllib.request.Request(
+        'https://api.resend.com/emails',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+            'User-Agent': 'ExpenseTracker/1.0',
+        },
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            logger.info(f"Email sent via Resend HTTPS API to {to_email} (Status: {resp.status})")
+            return True
+    except Exception as e:
+        logger.exception(f"Resend HTTPS API dispatch failed: {e}")
+        return False
+
 import logging
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
