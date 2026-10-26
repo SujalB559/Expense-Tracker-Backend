@@ -20,10 +20,14 @@ class UserSerializer(serializers.ModelSerializer):
             'initials',
             'currency',
             'theme',
-            'is_email_verified',\n            'is_staff',\n            'is_superuser',
+            'is_email_verified',
+            'is_staff',
+            'is_superuser',
             'date_joined',
         ]
-        read_only_fields = ['id', 'is_email_verified',\n            'is_staff',\n            'is_superuser', 'date_joined']
+        read_only_fields = ['id', 'is_email_verified',
+            'is_staff',
+            'is_superuser', 'date_joined']
 
 
 class RegisterSerializer(serializers.ModelSerializer):
