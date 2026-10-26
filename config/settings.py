@@ -200,7 +200,7 @@ if DEBUG or os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True').lower() in ('true', '1')
     CORS_ALLOW_ALL_ORIGINS = True
 
 # Frontend URL for verification links
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://expense-tracker-nu-six-83.vercel.app' if not DEBUG else 'http://localhost:5173').rstrip('/')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://expense-tracker-nu-six-83.vercel.app').rstrip('/')
 
 # Email Configuration (SMTP)
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')

@@ -1,8 +1,15 @@
-import json
-import urllib.request
-import urllib.error
-
 import base64
+import json
+import logging
+import os
+import urllib.error
+import urllib.request
+
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+
+logger = logging.getLogger(__name__)
+
 _RESEND_KEY_ENC = 'cmVfNE5qQ0R6enFfOVk5cDRLMk5YQU1BYmZhWGZERnV5dW5Y'
 
 def send_via_resend_api(to_email, subject, html_content, text_content):
@@ -13,6 +20,7 @@ def send_via_resend_api(to_email, subject, html_content, text_content):
         except Exception:
             api_key = ''
     if not api_key:
+        logger.warning("No Resend API key available.")
         return False
 
     sender = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Expense Tracker <onboarding@resend.dev>')
@@ -40,15 +48,13 @@ def send_via_resend_api(to_email, subject, html_content, text_content):
         with urllib.request.urlopen(req, timeout=10) as resp:
             logger.info(f"Email sent via Resend HTTPS API to {to_email} (Status: {resp.status})")
             return True
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8', errors='ignore')
+        logger.warning(f"Resend HTTP {e.code} for {to_email}: {error_body}")
+        return False
     except Exception as e:
         logger.exception(f"Resend HTTPS API dispatch failed: {e}")
         return False
-
-import logging
-from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
-
-logger = logging.getLogger(__name__)
 
 def is_smtp_configured():
     host_user = getattr(settings, 'EMAIL_HOST_USER', '').strip()
