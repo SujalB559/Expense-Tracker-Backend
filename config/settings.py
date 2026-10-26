@@ -87,14 +87,27 @@ DB_PASSWORD = os.getenv('DATABASE_PASSWORD', 'postgres')
 DB_HOST = os.getenv('DATABASE_HOST', 'localhost')
 DB_PORT = os.getenv('DATABASE_PORT', '5432')
 
-# In local environments where PostgreSQL server is not yet booted,
-# setting USE_SQLITE=True or USE_SQLITE_FALLBACK=True in .env allows instant zero-setup testing.
+# In local environments or Render free web service without a managed DB,
+# automatically default to SQLite if no DATABASE_URL or DATABASE_HOST is provided.
+has_postgres = bool(os.getenv('DATABASE_URL') or (os.getenv('DATABASE_HOST') and os.getenv('DATABASE_HOST') != 'localhost'))
 USE_SQLITE = (
-    os.getenv('USE_SQLITE', 'False').lower() in ('true', '1') or
-    os.getenv('USE_SQLITE_FALLBACK', 'False').lower() in ('true', '1')
+    os.getenv('USE_SQLITE', str(not has_postgres)).lower() in ('true', '1') or
+    os.getenv('USE_SQLITE_FALLBACK', 'False').lower() in ('true', '1') or
+    not has_postgres
 )
 
-if USE_SQLITE:
+if os.getenv('DATABASE_URL'):
+    try:
+        import dj_database_url
+        DATABASES = {'default': dj_database_url.config(default=os.getenv('DATABASE_URL'), conn_max_age=600)}
+    except Exception:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+elif USE_SQLITE:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
