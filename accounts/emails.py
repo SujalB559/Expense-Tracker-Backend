@@ -12,9 +12,7 @@ def is_smtp_configured():
 
 
 def send_verification_email(user, token_obj):
-    if not is_smtp_configured():
-        logger.info('SMTP not configured, skipping send.')
-        return False
+
     """
     Sends a professional, responsive HTML and plain-text email with a secure verification link.
     """
