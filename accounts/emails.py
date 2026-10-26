@@ -4,8 +4,17 @@ from django.core.mail import EmailMultiAlternatives
 
 logger = logging.getLogger(__name__)
 
+def is_smtp_configured():
+    host_user = getattr(settings, 'EMAIL_HOST_USER', '').strip()
+    host_password = getattr(settings, 'EMAIL_HOST_PASSWORD', '').strip()
+    return bool(host_user and host_password)
+
+
 
 def send_verification_email(user, token_obj):
+    if not is_smtp_configured():
+        logger.info('SMTP not configured, skipping send.')
+        return False
     """
     Sends a professional, responsive HTML and plain-text email with a secure verification link.
     """

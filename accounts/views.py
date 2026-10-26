@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_verification_email
+from .emails import send_verification_email, is_smtp_configured
 from .models import EmailVerificationToken, User
 from .serializers import (
     LoginSerializer,
@@ -27,6 +27,25 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+
+            if not is_smtp_configured():
+                user.is_email_verified = True
+                user.save(update_fields=['is_email_verified'])
+                refresh = RefreshToken.for_user(user)
+                return Response(
+                    {
+                        'message': 'Registration successful! Your account is active.',
+                        'email': user.email,
+                        'is_email_verified': True,
+                        'email_sent': False,
+                        'tokens': {
+                            'access': str(refresh.access_token),
+                            'refresh': str(refresh),
+                        },
+                        'user': UserSerializer(user).data,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
 
             # Create token & send verification email
             token_obj = EmailVerificationToken.create_token(user)
@@ -62,7 +81,11 @@ class LoginView(APIView):
 
             # Check email verification status
             if not user.is_email_verified:
-                return Response(
+                if not is_smtp_configured():
+                    user.is_email_verified = True
+                    user.save(update_fields=['is_email_verified'])
+                else:
+                    return Response(
                     {
                         'error': 'email_not_verified',
                         'message': 'Your email address is not verified yet. Please check your inbox or click below to resend the verification link.',
@@ -226,6 +249,18 @@ class ResendVerificationView(APIView):
             return Response(
                 {
                     'message': 'This account is already verified. You can log in directly.',
+                    'already_verified': True,
+                    'email': user.email,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        if not is_smtp_configured():
+            user.is_email_verified = True
+            user.save(update_fields=['is_email_verified'])
+            return Response(
+                {
+                    'message': 'Your account has been automatically activated! You can now log in directly.',
                     'already_verified': True,
                     'email': user.email,
                 },
