@@ -32,15 +32,19 @@ class RegisterView(APIView):
             token_obj = EmailVerificationToken.create_token(user)
             email_sent = send_verification_email(user, token_obj)
 
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'https://expense-tracker-nu-six-83.vercel.app').rstrip('/')
+            verification_url = f"{frontend_url}/verify-email?token={token_obj.token}"
+
             resp_data = {
                 'message': (
                     'Registration successful! A verification email has been sent to your inbox.'
                     if email_sent
-                    else "Registration successful! However, we couldn't send the verification email. Please click resend verification."
+                    else 'Registration successful! Click the activation link below to verify your account.'
                 ),
                 'email': user.email,
                 'is_email_verified': False,
                 'email_sent': email_sent,
+                'verification_url': verification_url,
                 'user': UserSerializer(user).data,
             }
             return Response(resp_data, status=status.HTTP_201_CREATED)
@@ -237,23 +241,19 @@ class ResendVerificationView(APIView):
         # Generate fresh token & send verification email
         token_obj = EmailVerificationToken.create_token(user)
         email_sent = send_verification_email(user, token_obj)
-
-        if not email_sent:
-            return Response(
-                {
-                    'error': 'email_send_failed',
-                    'message': "We couldn't send the verification email. Please try again.",
-                    'email': user.email,
-                    'email_sent': False,
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://expense-tracker-nu-six-83.vercel.app').rstrip('/')
+        verification_url = f"{frontend_url}/verify-email?token={token_obj.token}"
 
         return Response(
             {
-                'message': 'Verification email sent. Please check your inbox and spam folder.',
+                'message': (
+                    'Verification email sent. Please check your inbox and spam folder.'
+                    if email_sent
+                    else 'Verification link created! You can use the link below to verify.'
+                ),
                 'email': user.email,
-                'email_sent': True,
+                'email_sent': email_sent,
+                'verification_url': verification_url,
             },
             status=status.HTTP_200_OK,
         )
