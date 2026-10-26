@@ -24,7 +24,7 @@ def send_via_resend_api(to_email, subject, html_content, text_content):
         headers={
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json',
-            'User-Agent': 'ExpenseTracker/1.0',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         },
         method='POST',
     )
