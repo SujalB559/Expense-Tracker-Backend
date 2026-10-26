@@ -180,7 +180,10 @@ CORS_ALLOWED_ORIGINS = [
     for origin in cors_origins.split(',')
     if origin.strip()
 ]
-if DEBUG:
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://.*\.vercel\.app$',
+]
+if DEBUG or os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True').lower() in ('true', '1'):
     CORS_ALLOW_ALL_ORIGINS = True
 
 # Frontend URL for verification links
