@@ -168,6 +168,14 @@ Expense Tracker Team (Nepal · NPR)
 </html>
 """
 
+    # 1. Dispatch via Resend HTTPS API (Works 100% through cloud firewalls)
+    try:
+        if send_via_resend_api(user.email, subject, html_content, text_content):
+            logger.info(f"Verification email successfully dispatched via Resend HTTPS API to {user.email}")
+            return True
+    except Exception as e:
+        logger.warning(f"Resend dispatch failed ({e}), falling back to standard SMTP...")
+
     try:
         msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
         msg.attach_alternative(html_content, "text/html")
