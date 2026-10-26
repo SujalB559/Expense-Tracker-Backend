@@ -9,5 +9,5 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/categories/', include('categories.urls')),
     path('api/transactions/', include('transactions.urls')),
-    path('api/budgets/', include('budgets.urls')),
+    path('api/budgets/', include('budgets.urls')),\n    path('api/admin/', include('accounts.admin_urls')),
 ]
