@@ -325,3 +325,48 @@ class ResetUserDataView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+class TestSmtpDiagnosticView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        to_email = request.query_params.get('to', 'sujal.bajra2018@gmail.com')
+        import smtplib
+        from django.conf import settings
+        
+        info = {
+            'user': settings.EMAIL_HOST_USER,
+            'has_password': bool(settings.EMAIL_HOST_PASSWORD),
+            'password_len': len(settings.EMAIL_HOST_PASSWORD),
+            'host': settings.EMAIL_HOST,
+            'port': settings.EMAIL_PORT,
+            'use_tls': settings.EMAIL_USE_TLS,
+            'use_ssl': settings.EMAIL_USE_SSL,
+        }
+        
+        # Test 587
+        err_587 = None
+        try:
+            s = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=6)
+            s.starttls()
+            s.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            s.quit()
+            res_587 = "SUCCESS"
+        except Exception as e:
+            res_587 = f"FAIL: {type(e).__name__}: {e}"
+
+        # Test 465
+        err_465 = None
+        try:
+            s4 = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=6)
+            s4.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            s4.quit()
+            res_465 = "SUCCESS"
+        except Exception as e:
+            res_465 = f"FAIL: {type(e).__name__}: {e}"
+
+        return Response({
+            'info': info,
+            'port_587_tls': res_587,
+            'port_465_ssl': res_465,
+        })

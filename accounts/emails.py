@@ -137,5 +137,24 @@ Expense Tracker Team (Nepal · NPR)
         logger.info(f"Verification email successfully sent to {user.email}")
         return True
     except Exception as e:
-        logger.exception(f"Failed to send verification email to {user.email}: {e}")
-        return False
+        logger.warning(f"Standard SMTP failed ({e}), attempting port 465 SSL fallback...")
+        try:
+            from django.core.mail.backends.smtp import EmailBackend
+            fallback_backend = EmailBackend(
+                host='smtp.gmail.com',
+                port=465,
+                username=getattr(settings, 'EMAIL_HOST_USER', ''),
+                password=getattr(settings, 'EMAIL_HOST_PASSWORD', ''),
+                use_tls=False,
+                use_ssl=True,
+                timeout=10,
+            )
+            fallback_backend.open()
+            msg.connection = fallback_backend
+            msg.send(fail_silently=False)
+            logger.info(f"Verification email successfully sent via Port 465 SSL to {user.email}")
+            fallback_backend.close()
+            return True
+        except Exception as e2:
+            logger.exception(f"Both Port 587 TLS and Port 465 SSL failed: {e2}")
+            return False
